@@ -1,11 +1,17 @@
 {
   "bindings": [
     {
-      "name": "myBlob",
+      "name": "inputImage",
       "type": "blobTrigger",
       "direction": "in",
       "path": "images/{name}",
-      "connection": "diegofernandez_STORAGE"
+      "connection": "CONNECTION_STORAGE"
+    }, {
+      "name": "outputImage",
+      "type": "blob",
+      "path": "output/{name}",
+      "connection": "CONNECTION_STORAGE",
+      "direction": "out"
     }
   ]
 }
