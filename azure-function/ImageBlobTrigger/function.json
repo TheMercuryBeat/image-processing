@@ -6,12 +6,7 @@
       "direction": "in",
       "path": "images/{name}",
       "connection": "CONNECTION_STORAGE"
-    }, {
-      "name": "outputImage",
-      "type": "blob",
-      "path": "output/{name}",
-      "connection": "CONNECTION_STORAGE",
-      "direction": "out"
     }
-  ]
+  ],
+  "disabled": false
 }
