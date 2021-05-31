@@ -1,7 +1,10 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob');
 const sharp = require("sharp");
 const md5 = require("md5");
+const sizeOf = require('image-size')
+
 const { updateTaskStatus } = require('./service/taskService');
+const { saveImage } = require('./service/imageService');
 
 const account = process.env.ACCOUNT_NAME;
 const accountKey = process.env.ACCOUNT_KEY;
@@ -15,17 +18,17 @@ function getBaseUrl() {
     return `https://${account}.blob.core.windows.net`;
 }
 
-async function upload(imageInformation) {
+async function upload(imageResizedInformation) {
 
-    const { name, extension, content, contentType, size } = imageInformation;
+    const { name, extension, content, contentType, size } = imageResizedInformation;
 
     const containerClient = blobServiceClient.getContainerClient(containerName);
     await containerClient.createIfNotExists({ access: 'blob' });
 
-    const imageResizedMd5Name = md5(content);
-    const imagePath = `${name}/${size}/${imageResizedMd5Name}.${extension}`;
+    const imageResizedContentMd5 = md5(content);
+    const imageResizedRelativePath = `${name}/${size}/${imageResizedContentMd5}.${extension}`;
 
-    const blockBlobClient = containerClient.getBlockBlobClient(imagePath);
+    const blockBlobClient = containerClient.getBlockBlobClient(imageResizedRelativePath);
     const blobOptions = {
         blobHTTPHeaders: {
             blobContentType: contentType
@@ -33,13 +36,18 @@ async function upload(imageInformation) {
     };
 
     const uploadBlobResponse = await blockBlobClient.upload(content, Buffer.byteLength(content), blobOptions);
-    return { uploadBlobResponse, imagePath };
+    return {
+        requestId: uploadBlobResponse.requestId,
+        imageResizedName: `${imageResizedContentMd5}.${extension}`,
+        imageResizedAbsolutePath: `${getBaseUrl()}/${containerName}/${imageResizedRelativePath}`,
+        imageResizedContentMd5
+    };
 }
 
-function buildImageInformation(context, content, size) {
+async function buildImageResizedInformation(filename, contentType, originalImageContent, size) {
 
-    const contentType = context.bindingData.properties.contentType;
-    const [name, extension] = context.bindingData.name.split('.');
+    const [name, extension] = filename.split('.');
+    const content = await sharp(originalImageContent).resize({ width: size }).toBuffer();
 
     return { name, extension, content, contentType, size };
 
@@ -49,32 +57,68 @@ function espaceQuotes(value) {
     return value.replace(/['"]+/g, '');
 }
 
+async function saveOriginalImage(name, path, buffer) {
+
+    const md5Content = md5(buffer);
+    const { height: resolution } = sizeOf(buffer);
+    return await saveImage({ name, path, md5Content, resolution });
+
+}
+
+async function saveResizedImage(originalImage, imageResized, size) {
+
+    const { imageResizedName, imageResizedAbsolutePath, imageResizedContentMd5 } = imageResized;
+
+    const imageResizedData = {
+        name: imageResizedName,
+        path: imageResizedAbsolutePath,
+        md5Content: imageResizedContentMd5,
+        resolution: size,
+        originalId: originalImage.id
+    };
+
+    return await saveImage(imageResizedData);
+
+}
+
+
 module.exports = async function (context, inputImage) {
+
+    const { name, uri, properties } = context.bindingData;
+    const eTag = espaceQuotes(properties.eTag);
+    const contentType = properties.contentType;
 
     try {
 
-        context.log(`Received Blob: ${context.bindingData.name} \n`);
+        context.log(`Received Blob: ${name} \n`);
 
-        const eTag = espaceQuotes(context.bindingData.properties.eTag);
         await updateTaskStatus(eTag, 'PROCESSING')
+        context.log(`Updated the task status to 'PROCESSING' by eTag ${eTag}`);
 
-        const imagesProcessing = await Promise.all(imageSizes.map(async size => {
+        const originalImageSaved = await saveOriginalImage(name, uri, inputImage);
+        context.log(`Saved original image: ${JSON.stringify(originalImageSaved)}`);
 
-            const imageContentResized = await sharp(inputImage).resize({ width: size }).toBuffer();
-            const imageResizedInformation = buildImageInformation(context, imageContentResized, size)
-            const { uploadBlobResponse, imagePath } = await upload(imageResizedInformation);
+        const imagesProcessed = await Promise.all(imageSizes.map(async size => {
 
-            context.log(`Upload block blob ${imagePath} successfully`, uploadBlobResponse.requestId);
+            const imageResizedInformation = await buildImageResizedInformation(name, contentType, inputImage, size);
+            const imageResizedUploaded = await upload(imageResizedInformation);
+            context.log(`Upload block blob ${imageResizedUploaded.imageResizedAbsolutePath} successfully ${imageResizedUploaded.requestId}`);
+
+            const imageResizedSaved = await saveResizedImage(originalImageSaved, imageResizedUploaded, size);
+            context.log(`Saved original image: ${JSON.stringify(imageResizedSaved)}`);
+
             await updateTaskStatus(eTag, 'PROCESSED');
-            return `${getBaseUrl()}/${containerName}/${imagePath}`;
+            context.log(`Updated the task status to 'PROCESSED' by eTag ${eTag}`);
+
+            return imageResizedSaved.path;
 
         }));
 
-        context.log(`Images processed successfully: ${imagesProcessing} \n`);
+        context.log(`Images processed successfully: ${imagesProcessed} \n`);
 
     } catch (err) {
-        context.log(`Images processing failure: ${err} \n`);
         await updateTaskStatus(eTag, 'ERROR');
+        context.log(`Updated the task status to 'ERROR' by eTag ${eTag}: ${err}`);
     } finally {
         context.done();
     }
