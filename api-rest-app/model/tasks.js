@@ -15,7 +15,14 @@ Tasks.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  path: DataTypes.STRING
+  path: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  etag: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
 }, {
   sequelize
 });
