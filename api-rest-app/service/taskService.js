@@ -13,7 +13,12 @@ export async function processImage(image) {
 }
 
 export async function getProcessStatus(taskId) {
-    return await Tasks.findByPk(taskId);
+    const options = {
+        attributes: {
+            exclude: ['etag']
+        }
+    }
+    return await Tasks.findByPk(taskId, options);
 }
 
 function espaceQuotes(value) {
