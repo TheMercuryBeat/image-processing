@@ -1,6 +1,7 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob');
 const sharp = require("sharp");
 const md5 = require("md5");
+const { updateTaskStatus } = require('./service/taskService');
 
 const account = process.env.ACCOUNT_NAME;
 const accountKey = process.env.ACCOUNT_KEY;
@@ -44,11 +45,18 @@ function buildImageInformation(context, content, size) {
 
 }
 
+function espaceQuotes(value) {
+    return value.replace(/['"]+/g, '');
+}
+
 module.exports = async function (context, inputImage) {
 
     try {
 
         context.log(`Received Blob: ${context.bindingData.name} \n`);
+
+        const eTag = espaceQuotes(context.bindingData.properties.eTag);
+        await updateTaskStatus(eTag, 'PROCESSING')
 
         const imagesProcessing = await Promise.all(imageSizes.map(async size => {
 
@@ -57,6 +65,7 @@ module.exports = async function (context, inputImage) {
             const { uploadBlobResponse, imagePath } = await upload(imageResizedInformation);
 
             context.log(`Upload block blob ${imagePath} successfully`, uploadBlobResponse.requestId);
+            await updateTaskStatus(eTag, 'PROCESSED');
             return `${getBaseUrl()}/${containerName}/${imagePath}`;
 
         }));
@@ -65,6 +74,7 @@ module.exports = async function (context, inputImage) {
 
     } catch (err) {
         context.log(`Images processing failure: ${err} \n`);
+        await updateTaskStatus(eTag, 'ERROR');
     } finally {
         context.done();
     }

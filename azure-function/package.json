@@ -9,6 +9,8 @@
   "dependencies": {
     "@azure/storage-blob": "^12.5.0",
     "md5": "^2.3.0",
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.6.2",
     "sharp": "^0.28.3"
   },
   "devDependencies": {}
