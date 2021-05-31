@@ -13,11 +13,6 @@ export async function processImage(image) {
 }
 
 export async function getProcessStatus(taskId) {
-    const options = {
-        attributes: {
-            exclude: ['etag']
-        }
-    }
     return await Tasks.findByPk(taskId, options);
 }
 
