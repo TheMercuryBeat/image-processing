@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 const { mysql2 } = require('mysql2');
 
 const database = process.env.DATABASE || 'shopdb';
-const user = process.env.USER;
+const user = process.env.USERNAME;
 const password = process.env.PASSWORD;
 const host = process.env.HOST || '127.0.0.1';
 
