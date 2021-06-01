@@ -6,7 +6,7 @@ const user = process.env.USER || 'root';
 const password = process.env.PASSWORD || 'P@ssword2';
 const host = process.env.HOST || '127.0.0.1';
 
-module.exports = new Sequelize(database, 'root', password, {
+module.exports = new Sequelize(database, user, password, {
     host: host,
     dialect: 'mysql',
     dialectModule: mysql2,

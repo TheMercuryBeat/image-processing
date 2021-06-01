@@ -10,7 +10,8 @@ app.use(express.urlencoded({ extended: false }));
 
 app.post('/task', upload.any(), async (req, res) => {
 
-    const process = await Promise.all(req.files.map(async file => {
+    const files = req.files || [];
+    const process = await Promise.all(files.map(async file => {
         return await processImage(file);
     }));
     
