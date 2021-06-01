@@ -1,7 +1,7 @@
-import { Tasks } from '../model/tasks.js';
-import upload from '../service/storageService.js';
+const { Tasks } = require('../model/tasks.js');
+const { upload } = require('../service/storageService.js');
 
-export async function processImage(image) {
+async function processImage(image) {
 
     const { path, etag } = await upload(image);
 
@@ -12,10 +12,12 @@ export async function processImage(image) {
     });
 }
 
-export async function getProcessStatus(taskId) {
+async function getProcessStatus(taskId) {
     return await Tasks.findByPk(taskId, options);
 }
 
 function espaceQuotes(value) {
     return value.replace(/['"]+/g, '');
 }
+
+module.exports = { processImage, getProcessStatus };

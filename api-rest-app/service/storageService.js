@@ -1,4 +1,4 @@
-import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
+const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob');
 
 const account = process.env.ACCOUNT_NAME;
 const accountKey = process.env.ACCOUNT_KEY;
@@ -8,10 +8,10 @@ const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 const blobServiceClient = new BlobServiceClient(getBaseUrl(), sharedKeyCredential);
 
 function getBaseUrl() {
-    return`https://${account}.blob.core.windows.net`;
+    return `https://${account}.blob.core.windows.net`;
 }
 
-export default async function upload(image) {
+async function upload(image) {
 
     const { originalname, buffer, mimetype } = image;
     const containerClient = blobServiceClient.getContainerClient(containerName);
@@ -33,3 +33,5 @@ export default async function upload(image) {
     };
 
 }
+
+module.exports = { upload };

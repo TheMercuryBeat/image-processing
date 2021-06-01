@@ -1,9 +1,7 @@
-import sequelize from '../configuration/mysqlConnection.js';
-import sequelizePkg from 'sequelize';
+const sequelize = require('../configuration/mysqlConnection.js');
+const { DataTypes, Model } = require('sequelize');
 
-const { DataTypes, Model } = sequelizePkg;
-
-export class Tasks extends Model { }
+class Tasks extends Model { }
 
 Tasks.init({
   id: {
@@ -27,4 +25,6 @@ Tasks.init({
   sequelize
 });
 
-await sequelize.sync();
+sequelize.sync();
+
+module.exports = { Tasks };

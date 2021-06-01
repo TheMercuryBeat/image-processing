@@ -1,6 +1,6 @@
-import express from 'express';
-import multer from 'multer';
-import { processImage, getProcessStatus } from './service/taskService.js';
+const express = require('express');
+const multer = require('multer');
+const { processImage, getProcessStatus } = require('./service/taskService.js');
 
 const app = express();
 const upload = multer();
