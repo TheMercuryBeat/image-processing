@@ -1,7 +1,7 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob');
 
-const account = process.env.ACCOUNT_NAME;
-const accountKey = process.env.ACCOUNT_KEY;
+const account = process.env.ACCOUNT_NAME || 'accountKey';
+const accountKey = process.env.ACCOUNT_KEY || 'accountKey';
 const containerName = process.env.STORAGE_IMAGES || 'images';
 
 const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
