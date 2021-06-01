@@ -1,4 +1,4 @@
-const sequelize = require('../configuration/mysqlConnection.js');
+const sequelize = require('../configuration/mysqlConnection');
 const { DataTypes, Model } = require('sequelize');
 
 class Tasks extends Model { }

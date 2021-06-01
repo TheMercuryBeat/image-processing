@@ -1,5 +1,5 @@
-const { Tasks } = require('../model/tasks.js');
-const { upload } = require('../service/storageService.js');
+const { Tasks } = require('../model/tasks');
+const { upload } = require('./storageService');
 
 async function processImage(image) {
 

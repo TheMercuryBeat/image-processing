@@ -1,10 +1,9 @@
 const express = require('express');
 const multer = require('multer');
-const { processImage, getProcessStatus } = require('./service/taskService.js');
+const { processImage, getProcessStatus } = require('./service/taskService');
 
 const app = express();
 const upload = multer();
-const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -26,7 +25,4 @@ app.get('/task/:taskId', async (req, res) => {
 
 });
 
-
-app.listen(port, () => {
-    console.log(`Running on PORT ${port}`);
-})
+module.exports = app;
